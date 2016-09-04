@@ -1,6 +1,17 @@
-var ProductCategoryRow = React.createClass({
+var SearchBar = React.createClass({
+  handleChange: function() {
+    this.props.onUserInput(
+      this.refs.filterTextInput.value
+    );
+  },
   render: function() {
-    return (<tr><th colSpan="2">{this.props.category}</th></tr>);
+    return (
+      <div>
+        <input type="text" placeholder="Search..." value={this.props.filterText} 
+          ref="filterTextInput" onChange={this.handleChange}
+        />
+       </div> 
+    );
   }
 });
 
@@ -10,12 +21,15 @@ var ProductRow = React.createClass({
         //console.log("getDefaultProps");
         return {};
     },
-
-  
-  handleClick(e) {
+  handleSelect(e) {
         //console.log(e.target); //logs Observer class instance
          //alert(e);
-         console.log(this.refs);
+         //console.log(this.props.product);
+         //this.props.Child_AddNewBar.refs.piName = this.props.product.name;
+         //this.props.Child_AddNewBar.refs.piPrice = this.props.product.price;
+         //console.log(this.props.refs.Child_AddNewBar);
+         console.log("select row");
+         this.props.onSelectRow(this.props.product);
   },
   render: function() {
     var name =this.props.product.name;
@@ -23,11 +37,13 @@ var ProductRow = React.createClass({
       <tr>
         <td>{name}</td>
         <td>{this.props.product.price}</td>
-        <td><button onClick={this.handleClick.bind(this)}>Click</button></td>
+        <td><button onClick={this.handleSelect}>Select</button></td>
       </tr>
     );
   }
 });
+
+
 
 var ProductTable = React.createClass({
     //2.实例化阶段
@@ -37,121 +53,125 @@ var ProductTable = React.createClass({
     },  
     //render之前调用，业务逻辑都应该放在这里，如对state的操作等
     componentWillMount:function() {
-       this.state.jsonData =this.props.products;
-       this.state.TestPath = 'test';
     },  
     componentDidMount:function() {
         console.clear();
     },
     handleClick:function(e){
-      console.log(this.state.TestPath);
+      //this.setState({TestPath:'test'});
+      //this.state.TestPath='test';
+      //console.log(this.state.TestPath);
     },
   render: function() {
     var rows = [];
     var lastCategory = null;
     this.props.products.map(function(product) {
-      if (product.name.indexOf(this.props.filterText) === -1 || (!product.stocked && this.props.inStockOnly)) {
+      if (product.name.indexOf(this.props.filterText) === -1) {
         return;
       }
-      
-      if (product.category !== lastCategory) {
-        rows.push(<ProductCategoryRow category={product.category} key={product.category} />);
-      }
-      rows.push(<ProductRow product={product} key={product.name} />);
-      lastCategory = product.category;
+      rows.push(<ProductRow ref='Child_Row' onSelectRow={this.props.onSelectRow}  product={product} key={product.name} />);
     }.bind(this));
     return (
-      <table>
+      <div>
+      <table border='1' width='300'>
         <thead>
-        <tr><td colSpan='3'><button onClick={this.handleClick.bind(this)}>Click</button></td></tr>
-          <tr>
-            <th>Name</th>
-            <th>Price</th>
-            <th>actions</th>
-          </tr>
+          <tr><th>Name</th><th>Price</th><th>actions</th></tr>
         </thead>
         <tbody>{rows}</tbody>
       </table>
-    );
-  }
-});
-
-var SearchBar = React.createClass({
-  handleChange: function() {
-    this.props.onUserInput(
-      this.refs.filterTextInput.value,
-      this.refs.inStockOnlyInput.checked
-    );
-  },
-  render: function() {
-    return (
-      <form>
-        <input
-          type="text"
-          placeholder="Search..."
-          value={this.props.filterText}
-          ref="filterTextInput"
-          onChange={this.handleChange}
-        />
-        <p>
-          <input
-            type="checkbox"
-            checked={this.props.inStockOnly}
-            ref="inStockOnlyInput"
-            onChange={this.handleChange}
-          />
-          {' '}
-          Only show products in stock
-        </p>
-      </form>
-    );
-  }
-});
-
-var FilterableProductTable = React.createClass({
-  getInitialState: function() {
-    return {
-      filterText: '',
-      inStockOnly: false
-    };
-  },
-
-  handleUserInput: function(filterText, inStockOnly) {
-    this.setState({
-      filterText: filterText,
-      inStockOnly: inStockOnly
-    });
-  },
-
-  render: function() {
-    return (
-      <div>
-        <SearchBar
-          filterText={this.state.filterText}
-          inStockOnly={this.state.inStockOnly}
-          onUserInput={this.handleUserInput}
-        />
-        <ProductTable
-          products={this.props.products}
-          filterText={this.state.filterText}
-          inStockOnly={this.state.inStockOnly}
-        />
+      <p></p><p><button onClick={this.handleClick}>Click</button></p>
       </div>
     );
   }
 });
 
 
-var PRODUCTS = [
-  {index:1, category: 'Sporting Goods', price: '$49.99', stocked: true, name: 'Football'},
-  {index:6, category: 'Sporting Goods', price: '$9.99', stocked: true, name: 'Baseball'},
-  {index:3, category: 'Electronics', price: '$99.99', stocked: true, name: 'iPod Touch'},
-  {index:2, category: 'Electronics', price: '$399.99', stocked: false, name: 'iPhone 5'},
-  {index:4, category: 'Sporting Goods', price: '$29.99', stocked: false, name: 'Basketball'},
-  {index:5, category: 'Electronics', price: '$199.99', stocked: true, name: 'Nexus 7'}
-];
 
+var NewAddBar = React.createClass({
+  getInitialState:function(){
+    return{productInfo:{name:'',price:''},updateStatus:0};
+  },
+  handleClick:function(e){
+    console.log('click -- addnew');
+    this.state.productInfo={name:this.refs.piName.value,price:this.refs.piPrice.value};
+        this.setState({updateStatus:1});
+    this.props.onUserInput(this.state.productInfo,1);
+    //console.log(this.state.productInfo);
+    this.refs.piName.value=null;
+    this.refs.piPrice.value=null;
+  },
+  handleUpdate:function(e){
+    this.refs.piName.value=e.name;
+    this.refs.piPrice.value=e.price;
+  },
+  componentWillMount:function(){
+    console.log('componentWillMount -- addnew');
+  },
+  componentDidMount:function(){
+    console.log("componentDidMount -- addnew");
+    this.refs.piName.value=null;
+    this.refs.piPrice.value=null;
+  },
+  render:function(){
+    return(
+    <table aria-border="1">
+      <tr><td colspan='2'>Add New Product</td></tr>
+      <tr>
+        <td>Name</td>
+        <td><input type='text' ref='piName'/></td>
+      </tr>
+      <tr>
+        <td>price</td>
+        <td><input type='text' ref='piPrice' /></td>
+      </tr>
+      <tr><td></td><td><button onClick={this.handleClick}>AddNew</button></td></tr>
+    </table>
+    );
+  }
+});
+
+
+var FilterableProductTable = React.createClass({
+  getInitialState: function() {
+    return {
+      filterText: '',
+      products:[
+        {price: '299.99', name: 'iPod Touch'},
+        {price: '399.99', name: 'iPhone 5'},
+        {price: '199.99', name: 'Nexus 7'}
+      ]
+    };
+  },
+
+  handleUserInput: function(filterText) {
+    this.setState({filterText: filterText});
+  },
+  handleAddNew:function(productInfo,updateStatus){
+    this.state.products.push(productInfo);
+    this.setState({products:this.state.products});
+    console.log(updateStatus);
+  },
+  handleSelectRow:function(productInfo){
+    console.log("selectRow -- FilterableProductTable");
+    console.log(productInfo);
+    this.refs.Child_AddNewBar.handleUpdate(productInfo);
+  },
+  componentWillMount:function(){},
+  componentDidMount:function(){},  
+  render: function(){
+    //console.log("render");
+    return (
+      <div>
+          <SearchBar ref='Child_SearchBar' onUserInput={this.handleUserInput} filterText={this.state.filterText}/>      
+          <NewAddBar ref='Child_AddNewBar' onUserInput={this.handleAddNew} />
+          <ProductTable ref='Child_Table'
+            onSelectRow={this.handleSelectRow} 
+            products={this.state.products} filterText={this.state.filterText}/>        
+      </div>
+    );
+  }
+});
 ReactDOM.render(
-  <FilterableProductTable products={PRODUCTS} />,
+  <FilterableProductTable />,
   document.getElementById('container')
 );
